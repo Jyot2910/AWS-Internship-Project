@@ -1,0 +1,12 @@
+{
+  "name": "aws-ec2-s3-project",
+  "version": "1.0.0",
+  "description": "Node.js app with S3 image gallery deployed on AWS EC2",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
