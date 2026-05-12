@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Database — Jyot's Cloud Gallery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#080c10;--surface:#0f1318;--surface2:#141920;--border:#1e2530;
+      --accent:#00e5ff;--accent2:#39ff14;--gold:#ffd700;--purple:#a78bfa;
+      --text:#e8f0fe;--muted:#6b7a99;--red:#ff6b6b;--radius:16px;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh;overflow-x:hidden}
+    body::before{
+      content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(0,229,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.03) 1px,transparent 1px);
+      background-size:40px 40px;pointer-events:none;z-index:0;
+    }
+
+    /* HEADER */
+    header{display:flex;align-items:center;justify-content:space-between;padding:20px 48px;border-bottom:1px solid var(--border);background:rgba(8,12,16,0.85);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+    .logo{display:flex;align-items:center;gap:14px}
+    .logo-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 20px rgba(0,229,255,0.4)}
+    .logo-name{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800}
+    .logo-name span{color:var(--accent)}
+    .logo-sub{font-size:0.7rem;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-top:1px}
+    .header-right{display:flex;align-items:center;gap:12px}
+    .live-dot{width:8px;height:8px;background:var(--accent2);border-radius:50%;animation:pulse 2s infinite;box-shadow:0 0 8px var(--accent2)}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+    .live-label{font-size:0.75rem;color:var(--accent2);letter-spacing:0.08em;text-transform:uppercase}
+    nav{display:flex;gap:4px;margin-left:16px}
+    nav a{padding:8px 20px;border-radius:8px;text-decoration:none;font-size:0.82rem;font-weight:600;color:var(--muted);transition:all 0.2s;letter-spacing:0.05em;text-transform:uppercase;border:1px solid transparent}
+    nav a.active{background:rgba(0,229,255,0.1);color:var(--accent);border-color:rgba(0,229,255,0.3)}
+    nav a:hover{color:var(--accent);border-color:rgba(0,229,255,0.2)}
+
+    /* HERO */
+    .hero{padding:52px 48px 36px;position:relative;z-index:1;border-bottom:1px solid var(--border)}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);padding:6px 16px;border-radius:20px;font-size:0.75rem;font-weight:600;color:var(--purple);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:20px}
+    .hero h1{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-0.02em;margin-bottom:12px}
+    .hero h1 .highlight{background:linear-gradient(90deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-sub{font-size:0.92rem;color:var(--muted);max-width:540px;line-height:1.7;margin-bottom:28px}
+    .hero-meta{display:flex;gap:28px;flex-wrap:wrap}
+    .meta-item{display:flex;flex-direction:column;gap:4px}
+    .meta-val{font-size:1.3rem;font-weight:700;color:var(--accent)}
+    .meta-label{font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em}
+
+    /* CLOUD INFRA SECTION */
+    .section{padding:40px 48px 0;position:relative;z-index:1}
+    .section-title{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-0.01em;margin-bottom:6px}
+    .section-sub{font-size:0.83rem;color:var(--muted);margin-bottom:28px}
+
+    /* NETWORK STATS */
+    .network-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+    .net-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:14px;
+      padding:22px 24px;position:relative;overflow:hidden;
+      transition:transform 0.2s,border-color 0.2s;
+      animation:fadeUp 0.5s ease both;
+    }
+    .net-card:nth-child(1){animation-delay:0.05s;border-top:2px solid var(--accent)}
+    .net-card:nth-child(2){animation-delay:0.1s;border-top:2px solid var(--accent2)}
+    .net-card:nth-child(3){animation-delay:0.15s;border-top:2px solid var(--purple)}
+    .net-card:nth-child(4){animation-delay:0.2s;border-top:2px solid var(--gold)}
+    .net-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(0,229,255,0.03),transparent 60%);pointer-events:none}
+    .net-card:hover{transform:translateY(-3px);border-color:rgba(0,229,255,0.3)}
+    .net-icon{font-size:1.5rem;margin-bottom:12px}
+    .net-label{font-size:0.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+    .net-val{font-size:1.6rem;font-weight:700;font-family:'Syne',sans-serif}
+    .net-val.cyan{color:var(--accent)}
+    .net-val.green{color:var(--accent2)}
+    .net-val.purple{color:var(--purple)}
+    .net-val.gold{color:var(--gold)}
+    .net-sub{font-size:0.72rem;color:var(--muted);margin-top:6px}
+
+    /* ARCH CARDS */
+    .arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
+    .arch-row2{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+    .arch-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:26px;position:relative;overflow:hidden;
+      transition:transform 0.25s,border-color 0.25s,box-shadow 0.25s;
+      animation:fadeUp 0.5s ease both;
+    }
+    .arch-card.highlight-card{border-top:2px solid var(--accent)}
+    .arch-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 20%,rgba(0,229,255,0.04),transparent 60%);pointer-events:none}
+    .arch-card:hover{transform:translateY(-4px);border-color:rgba(0,229,255,0.3);box-shadow:0 12px 40px rgba(0,0,0,0.5)}
+    .arch-icon{font-size:2rem;margin-bottom:14px;display:block}
+    .arch-arrow{position:absolute;top:18px;right:18px;width:30px;height:30px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:13px;cursor:pointer;transition:all 0.2s}
+    .arch-arrow:hover{background:var(--accent);color:#000}
+    .arch-card h3{font-size:1rem;font-weight:700;margin-bottom:10px;color:var(--text)}
+    .arch-card p{font-size:0.81rem;color:var(--muted);line-height:1.65}
+    .arch-badge{display:inline-block;margin-top:12px;padding:3px 10px;border-radius:20px;font-size:0.67rem;font-weight:600;background:rgba(0,229,255,0.08);color:var(--accent);border:1px solid rgba(0,229,255,0.2)}
+    .arch-badge.green{background:rgba(57,255,20,0.08);color:var(--accent2);border-color:rgba(57,255,20,0.2)}
+    .arch-badge.purple{background:rgba(167,139,250,0.08);color:var(--purple);border-color:rgba(167,139,250,0.2)}
+
+    /* DATABASE TABLE */
+    .db-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+    .search-box{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px}
+    .search-box input{background:none;border:none;outline:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:0.83rem;width:200px}
+    .search-box input::placeholder{color:var(--muted)}
+    .btn{padding:8px 18px;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-size:0.8rem;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all 0.2s;letter-spacing:0.03em}
+    .btn-ghost{background:transparent;color:var(--muted)}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-primary{background:var(--accent);color:#000;border-color:var(--accent)}
+    .btn-primary:hover{background:#33eeff}
+    .filter-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .filter-label{font-size:0.75rem;color:var(--muted)}
+    .filter-chip{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:4px 14px;border-radius:20px;font-size:0.73rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+    .filter-chip.active,.filter-chip:hover{background:rgba(0,229,255,0.1);color:var(--accent);border-color:rgba(0,229,255,0.3)}
+
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:0.81rem}
+    thead tr{background:var(--surface);border-bottom:2px solid var(--border)}
+    thead th{padding:13px 16px;text-align:left;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;font-size:0.7rem;white-space:nowrap;cursor:pointer;user-select:none;transition:color 0.2s}
+    thead th:hover{color:var(--accent)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background 0.15s;animation:fadeIn 0.4s ease both}
+    tbody tr:nth-child(1){animation-delay:0.05s}
+    tbody tr:nth-child(2){animation-delay:0.1s}
+    tbody tr:nth-child(3){animation-delay:0.15s}
+    tbody tr:nth-child(4){animation-delay:0.2s}
+    @keyframes fadeIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+    tbody tr:hover{background:var(--surface2)}
+    tbody td{padding:14px 16px;color:var(--text);vertical-align:middle}
+    .td-id{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted)}
+    .td-filename{font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--accent);font-weight:500}
+    .td-key{font-family:'JetBrains Mono',monospace;font-size:0.73rem;color:var(--muted);max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:0.7rem;font-weight:600}
+    .badge-jpeg{background:rgba(57,255,20,0.08);color:var(--accent2);border:1px solid rgba(57,255,20,0.2)}
+    .badge-public{background:rgba(0,229,255,0.08);color:var(--accent);border:1px solid rgba(0,229,255,0.2)}
+    .badge-tag{background:rgba(167,139,250,0.08);color:var(--purple);border:1px solid rgba(167,139,250,0.2)}
+    .td-size{color:var(--gold);font-weight:600}
+    .td-date{color:var(--muted);font-size:0.75rem;font-family:'JetBrains Mono',monospace}
+    .td-dim{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#a0a0a0}
+    .actions{display:flex;gap:6px}
+    .action-btn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:0.7rem;cursor:pointer;transition:all 0.2s;font-family:'Space Grotesk',sans-serif}
+    .action-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .action-btn.del:hover{border-color:var(--red);color:var(--red)}
+
+    /* FOOTER */
+    .footer{margin-top:60px;padding:28px 48px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:relative;z-index:1;flex-wrap:wrap;gap:12px}
+    .footer-left{font-size:0.78rem;color:var(--muted)}
+    .footer-left strong{color:var(--accent)}
+    .deploy-badge{display:flex;align-items:center;gap:8px;background:rgba(57,255,20,0.06);border:1px solid rgba(57,255,20,0.2);padding:8px 16px;border-radius:20px;font-size:0.73rem;color:var(--accent2);font-weight:600}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">🪣</div>
+    <div>
+      <div class="logo-name">Jyot's <span>Cloud</span></div>
+      <div class="logo-sub">AWS · S3 · EC2 · ROS</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot"></div>
+    <span class="live-label">Live on AWS</span>
+    <nav>
+      <a href="index.html">Gallery</a>
+      <a href="completion.html" class="active">Database</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">🗄️ Cloud Database — Jyot's Project</div>
+  <h1>S3 Metadata <span class="highlight">Database</span></h1>
+  <p class="hero-sub">All photo metadata stored in PostgreSQL on AWS EC2. No images here — pure structured data powering the gallery. Connected via Express.js API.</p>
+  <div class="hero-meta">
+    <div class="meta-item"><span class="meta-val">4</span><span class="meta-label">DB Records</span></div>
+    <div class="meta-item"><span class="meta-val">11</span><span class="meta-label">Columns</span></div>
+    <div class="meta-item"><span class="meta-val">28.4 MB</span><span class="meta-label">S3 Storage</span></div>
+    <div class="meta-item"><span class="meta-val">0 ms</span><span class="meta-label">Query Time</span></div>
+    <div class="meta-item"><span class="meta-val">PostgreSQL</span><span class="meta-label">Engine</span></div>
+  </div>
+</div>
+
+<!-- NETWORK & CLOUD POWER -->
+<div class="section" style="padding-top:44px">
+  <div class="section-title">Network & Cloud Power</div>
+  <div class="section-sub">Real-time infrastructure metrics for this deployment</div>
+  <div class="network-grid">
+    <div class="net-card">
+      <div class="net-icon">🌐</div>
+      <div class="net-label">Network Bandwidth</div>
+      <div class="net-val cyan">1 Gbps</div>
+      <div class="net-sub">EC2 instance network · AWS VPC</div>
+    </div>
+    <div class="net-card">
+      <div class="net-icon">⚡</div>
+      <div class="net-label">Cloud Power</div>
+      <div class="net-val green">AWS Region</div>
+      <div class="net-sub">ap-south-1 · Mumbai · 99.99% SLA</div>
+    </div>
+    <div class="net-card">
+      <div class="net-icon">🔒</div>
+      <div class="net-label">Security Groups</div>
+      <div class="net-val purple">HTTP/HTTPS</div>
+      <div class="net-sub">Port 80 · Port 443 · Open to 0.0.0.0/0</div>
+    </div>
+    <div class="net-card">
+      <div class="net-icon">📡</div>
+      <div class="net-label">S3 Data Transfer</div>
+      <div class="net-val gold">28.4 MB</div>
+      <div class="net-sub">Served publicly · CDN-ready endpoints</div>
+    </div>
+  </div>
+</div>
+
+<!-- ARCHITECTURE -->
+<div class="section">
+  <div class="section-title">Project Architecture</div>
+  <div class="section-sub">Complete AWS cloud stack deployed by Jyot</div>
+  <div class="arch-grid">
+    <div class="arch-card highlight-card">
+      <span class="arch-icon">☁️</span>
+      <div class="arch-arrow">↗</div>
+      <h3>AWS EC2 Instance</h3>
+      <p>Ubuntu server running Node.js on port 80. Configured with security groups allowing HTTP/HTTPS traffic from anywhere.</p>
+      <span class="arch-badge">t2.micro · Ubuntu 20.04</span>
+    </div>
+    <div class="arch-card highlight-card">
+      <span class="arch-icon">🪣</span>
+      <div class="arch-arrow">↗</div>
+      <h3>Amazon S3 Bucket</h3>
+      <p>Stores and serves images publicly. Bucket policy configured for public read access on all stored objects.</p>
+      <span class="arch-badge green">Public Read · JPEG</span>
+    </div>
+    <div class="arch-card highlight-card">
+      <span class="arch-icon">⚡</span>
+      <div class="arch-arrow">↗</div>
+      <h3>Express.js Server</h3>
+      <p>Lightweight web server handling routing for the homepage and the completion/gallery page with static file serving.</p>
+      <span class="arch-badge">Node.js · Express 4.x</span>
+    </div>
+  </div>
+  <div class="arch-row2">
+    <div class="arch-card">
+      <span class="arch-icon">🤖</span>
+      <div class="arch-arrow">↗</div>
+      <h3>ROS Noetic on Cloud</h3>
+      <p>Robot Operating System deployed on Ubuntu 20.04 EC2 instance. Allows developers to run robotic simulations on the cloud.</p>
+      <span class="arch-badge purple">ROS Noetic · Simulation</span>
+    </div>
+    <div class="arch-card">
+      <span class="arch-icon">🗄️</span>
+      <div class="arch-arrow">↗</div>
+      <h3>PostgreSQL Database</h3>
+      <p>Relational database storing all S3 object metadata. Queried via Express.js API endpoints. Hosted on EC2 instance.</p>
+      <span class="arch-badge">PostgreSQL · Port 5432</span>
+    </div>
+    <div class="arch-card">
+      <span class="arch-icon">🌐</span>
+      <div class="arch-arrow">↗</div>
+      <h3>AWS VPC Network</h3>
+      <p>Virtual Private Cloud with public subnet, internet gateway, and routing tables. Security groups control inbound/outbound traffic.</p>
+      <span class="arch-badge green">VPC · IGW · Subnets</span>
+    </div>
+  </div>
+</div>
+
+<!-- DATABASE TABLE -->
+<div class="section" style="padding-bottom:48px">
+  <div class="section-title">photo_metadata Table</div>
+  <div class="section-sub">All S3 object records — data only, no images stored here</div>
+
+  <div class="db-header">
+    <div class="search-box">
+      <span style="color:var(--muted)">🔍</span>
+      <input type="text" placeholder="Search records..." oninput="filterTable(this.value)"/>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost">Export CSV</button>
+      <button class="btn btn-ghost">SQL Query</button>
+      <button class="btn btn-primary">+ Insert Row</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <span class="filter-label">Filter by tag:</span>
+    <span class="filter-chip active" onclick="filterChip('all',this)">All</span>
+    <span class="filter-chip" onclick="filterChip('Landscape',this)">Landscape</span>
+    <span class="filter-chip" onclick="filterChip('Architecture',this)">Architecture</span>
+    <span class="filter-chip" onclick="filterChip('People',this)">People</span>
+    <span class="filter-chip" onclick="filterChip('Desert',this)">Desert</span>
+  </div>
+
+  <div class="table-wrap">
+    <table id="dbTable">
+      <thead>
+        <tr>
+          <th>ID ↕</th>
+          <th>Filename ↕</th>
+          <th>S3 Key / Path ↕</th>
+          <th>Format ↕</th>
+          <th>Size ↕</th>
+          <th>Dimensions ↕</th>
+          <th>Tag ↕</th>
+          <th>Access ↕</th>
+          <th>Uploaded At ↕</th>
+          <th>ETag / Hash</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <tr data-tag="Landscape">
+          <td class="td-id">#001</td>
+          <td class="td-filename">daniel-angele-...unsplash.jpg</td>
+          <td class="td-key">gallery/daniel-angele-Joo3UBw789Q-unsplash.jpg</td>
+          <td><span class="badge badge-jpeg">JPEG</span></td>
+          <td class="td-size">7.2 MB</td>
+          <td class="td-dim">3648 × 4872</td>
+          <td><span class="badge badge-tag">Landscape</span></td>
+          <td><span class="badge badge-public">Public</span></td>
+          <td class="td-date">2026-04-27 09:14:32</td>
+          <td class="td-id">a3f9c2b1d4e87601</td>
+          <td><div class="actions"><button class="action-btn">Edit</button><button class="action-btn">URL</button><button class="action-btn del">Delete</button></div></td>
+        </tr>
+        <tr data-tag="Architecture">
+          <td class="td-id">#002</td>
+          <td class="td-filename">evgeni-tcherkasski-...unsplash.jpg</td>
+          <td class="td-key">gallery/evgeni-tcherkasski-ZcvxatSfif0-unsplash.jpg</td>
+          <td><span class="badge badge-jpeg">JPEG</span></td>
+          <td class="td-size">8.1 MB</td>
+          <td class="td-dim">5472 × 3648</td>
+          <td><span class="badge badge-tag">Architecture</span></td>
+          <td><span class="badge badge-public">Public</span></td>
+          <td class="td-date">2026-04-27 09:15:07</td>
+          <td class="td-id">b7e2f4a9c1d03582</td>
+          <td><div class="actions"><button class="action-btn">Edit</button><button class="action-btn">URL</button><button class="action-btn del">Delete</button></div></td>
+        </tr>
+        <tr data-tag="People">
+          <td class="td-id">#003</td>
+          <td class="td-filename">land-o-lakes-inc-...unsplash.jpg</td>
+          <td class="td-key">gallery/land-o-lakes-inc-DWv3vEGKW1E-unsplash.jpg</td>
+          <td><span class="badge badge-jpeg">JPEG</span></td>
+          <td class="td-size">6.4 MB</td>
+          <td class="td-dim">6000 × 4000</td>
+          <td><span class="badge badge-tag">People</span></td>
+          <td><span class="badge badge-public">Public</span></td>
+          <td class="td-date">2026-04-27 09:16:44</td>
+          <td class="td-id">c4d8b3e6f2a17904</td>
+          <td><div class="actions"><button class="action-btn">Edit</button><button class="action-btn">URL</button><button class="action-btn del">Delete</button></div></td>
+        </tr>
+        <tr data-tag="Desert">
+          <td class="td-id">#004</td>
+          <td class="td-filename">nir-himi-...unsplash.jpg</td>
+          <td class="td-key">gallery/nir-himi-Rs4KjUoBo4Y-unsplash.jpg</td>
+          <td><span class="badge badge-jpeg">JPEG</span></td>
+          <td class="td-size">6.7 MB</td>
+          <td class="td-dim">3840 × 5760</td>
+          <td><span class="badge badge-tag">Desert</span></td>
+          <td><span class="badge badge-public">Public</span></td>
+          <td class="td-date">2026-04-27 09:17:59</td>
+          <td class="td-id">d1a5c7f0e9b24316</td>
+          <td><div class="actions"><button class="action-btn">Edit</button><button class="action-btn">URL</button><button class="action-btn del">Delete</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="footer-left">☁️ Cloud Deployed by <strong>Jyot</strong> &nbsp;·&nbsp; AWS EC2 + S3 + Express.js + PostgreSQL + ROS Noetic</div>
+  <div class="deploy-badge">
+    <span style="width:8px;height:8px;background:var(--accent2);border-radius:50%;display:inline-block"></span>
+    Deployed &amp; Running on AWS
+  </div>
+</div>
+
+<script>
+  function filterTable(q){
+    var rows=document.querySelectorAll('#tableBody tr');
+    q=q.toLowerCase();
+    rows.forEach(function(r){r.style.display=r.textContent.toLowerCase().includes(q)?'':'none'});
+  }
+  function filterChip(tag,el){
+    document.querySelectorAll('.filter-chip').forEach(function(c){c.classList.remove('active')});
+    el.classList.add('active');
+    var rows=document.querySelectorAll('#tableBody tr');
+    rows.forEach(function(r){r.style.display=(tag==='all'||r.dataset.tag===tag)?'':'none'});
+  }
+</script>
+</body>
+</html>
