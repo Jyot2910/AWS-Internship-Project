@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ROS Noetic — Cloud Deployment by Jyot</title>
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --card: #1a1a24;
+      --accent: #e8ff47;
+      --accent2: #47c8ff;
+      --accent3: #ff6b47;
+      --text: #f0f0f8;
+      --muted: #7a7a9a;
+      --border: rgba(255,255,255,0.07);
+      --code-bg: #0d1117;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 60px 60px;
+      z-index: 0;
+    }
+
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(130px);
+      opacity: 0.1;
+      z-index: 0;
+    }
+    .blob-1 { width: 450px; height: 450px; background: #ff6b47; top: -100px; right: -100px; }
+    .blob-2 { width: 350px; height: 350px; background: var(--accent2); bottom: -80px; left: -80px; }
+
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 3rem;
+      background: rgba(10,10,15,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links { display: flex; gap: 0.75rem; }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.88rem;
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      transition: all 0.2s;
+    }
+    nav a:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 10rem 2rem 5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,107,71,0.08);
+      border: 1px solid rgba(255,107,71,0.25);
+      color: var(--accent3);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent3);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    h1 {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 800;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 1rem;
+    }
+
+    h1 .ros { color: var(--accent3); }
+    h1 .cloud { color: var(--accent2); }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      font-weight: 300;
+      max-width: 520px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.7;
+    }
+
+    /* Spec cards */
+    .specs {
+      display: inline-flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 4rem;
+    }
+
+    .spec-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.5rem 1.1rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .spec-chip .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent3);
+    }
+
+    /* Main content */
+    .content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem 6rem;
+    }
+
+    /* Step */
+    .step {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .step:nth-child(1) { animation-delay: 0.1s; }
+    .step:nth-child(2) { animation-delay: 0.2s; }
+    .step:nth-child(3) { animation-delay: 0.3s; }
+    .step:nth-child(4) { animation-delay: 0.4s; }
+    .step:nth-child(5) { animation-delay: 0.5s; }
+
+    .step-num {
+      width: 56px; height: 56px;
+      border-radius: 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: var(--accent3);
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .step-num::after {
+      content: '';
+      position: absolute;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: calc(100% + 2.5rem - 56px);
+      background: var(--border);
+    }
+
+    .step:last-child .step-num::after { display: none; }
+
+    .step-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.8rem;
+      transition: border-color 0.3s;
+    }
+
+    .step-body:hover { border-color: rgba(255,107,71,0.2); }
+
+    .step-title {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .step-icon { font-size: 1.2rem; }
+
+    .step-desc {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 1.2rem;
+    }
+
+    /* Code block */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 1rem;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.7rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .code-label {
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .copy-btn.copied { border-color: #4ade80; color: #4ade80; }
+
+    code {
+      display: block;
+      padding: 1.2rem 1.2rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      color: #e2e8f0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    code .comment { color: #6b7280; }
+    code .cmd { color: #93c5fd; }
+    code .str { color: #86efac; }
+    code .kw { color: var(--accent3); }
+
+    /* Section header */
+    .section-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent3);
+      margin-bottom: 0.5rem;
+    }
+
+    .section-title {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    /* Success banner */
+    .success-banner {
+      background: linear-gradient(135deg, rgba(232,255,71,0.06), rgba(71,200,255,0.06));
+      border: 1px solid rgba(232,255,71,0.2);
+      border-radius: 20px;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .success-icon {
+      font-size: 2.5rem;
+      flex-shrink: 0;
+    }
+
+    .success-banner h3 {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .success-banner p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* Nav links at bottom */
+    .page-nav {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 4rem;
+    }
+
+    .page-nav a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.8rem;
+      border-radius: 100px;
+      text-decoration: none;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      transition: all 0.25s;
+    }
+
+    .page-nav a:hover { border-color: var(--accent); color: var(--accent); }
+    .page-nav a.primary { background: var(--accent); color: #0a0a0f; border-color: var(--accent); }
+    .page-nav a.primary:hover { background: #fff; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 3rem 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-name {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent3);
+      letter-spacing: -0.03em;
+      margin-bottom: 0.4rem;
+    }
+
+    footer p { color: var(--muted); font-size: 0.88rem; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.2rem; }
+      .step { grid-template-columns: 40px 1fr; gap: 1rem; }
+      .step-num { width: 40px; height: 40px; font-size: 0.9rem; border-radius: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <nav>
+    <div class="nav-logo">J<span>.</span>ot</div>
+    <div class="nav-links">
+      <a href="/">← Home</a>
+      <a href="/completion">S3 Gallery</a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="badge">🤖 IS Robotics · Cloud Deployment</div>
+    <h1><span class="ros">ROS</span> on<br/><span class="cloud">AWS Cloud</span></h1>
+    <p class="subtitle">
+      Deploying ROS Noetic on AWS EC2 — enabling developers at IS Robotics to run robotic simulations and implementations on the cloud.
+    </p>
+
+    <div class="specs">
+      <div class="spec-chip"><div class="dot"></div> Ubuntu 20.04 LTS</div>
+      <div class="spec-chip"><div class="dot"></div> t2.micro</div>
+      <div class="spec-chip"><div class="dot"></div> 30GB Storage</div>
+      <div class="spec-chip"><div class="dot"></div> ROS Noetic</div>
+    </div>
+  </section>
+
+  <div class="content">
+
+    <div class="success-banner">
+      <div class="success-icon">✅</div>
+      <div>
+        <h3>Deployment Successful — by Jyot</h3>
+        <p>ROS Noetic successfully installed on AWS EC2 Ubuntu 20.04 instance. Robot Operating System is live and ready for robotic simulation workflows.</p>
+      </div>
+    </div>
+
+    <!-- EC2 Setup -->
+    <div class="section-header">
+      <div class="section-label">Phase 1</div>
+      <div class="section-title">EC2 Instance Setup</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <div class="step-title"><span class="step-icon">☁️</span> Launch EC2 Instance</div>
+        <p class="step-desc">Create an AWS EC2 instance with Ubuntu 20.04 LTS, t2.micro (free tier), and 30GB of EBS storage. Open ports 22 (SSH) in the security group.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <div class="step-title"><span class="step-icon">🔄</span> Update System Packages</div>
+        <p class="step-desc">Connect via SSH and update all system packages before beginning the ROS installation.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-label">bash · EC2 Terminal</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <code><span class="cmd">sudo apt update && sudo apt upgrade -y</span></code>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROS Installation -->
+    <div class="section-header" style="margin-top:3rem;">
+      <div class="section-label">Phase 2</div>
+      <div class="section-title">ROS Noetic Installation</div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <div class="step-title"><span class="step-icon">📋</span> Configure Ubuntu Repositories & Sources</div>
+        <p class="step-desc">Setup your sources.list to accept software from packages.ros.org, then add the ROS GPG key for secure package verification.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-label">bash · Setup sources.list</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <code><span class="comment"># Add ROS package source</span>
+<span class="cmd">sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'</span>
+
+<span class="comment"># Install curl (if not already installed)</span>
+<span class="cmd">sudo apt install curl -y</span>
+
+<span class="comment"># Add ROS GPG key</span>
+<span class="cmd">curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -</span></code>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <div class="step-title"><span class="step-icon">📦</span> Install ROS Noetic Desktop-Full</div>
+        <p class="step-desc">Update package index then install the full ROS Noetic desktop package — includes 2D/3D simulators and perception packages for robotic development.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-label">bash · Install ROS Noetic</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <code><span class="comment"># Update package index</span>
+<span class="cmd">sudo apt update</span>
+
+<span class="comment"># Install ROS Noetic Desktop-Full (Recommended)</span>
+<span class="comment"># Includes: simulators, 2D/3D perception packages</span>
+<span class="cmd">sudo apt install ros-noetic-desktop-full -y</span></code>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">05</div>
+      <div class="step-body">
+        <div class="step-title"><span class="step-icon">⚙️</span> Environment Setup</div>
+        <p class="step-desc">Source the ROS setup script in every bash terminal. Add it to <code style="background:var(--code-bg);padding:2px 6px;border-radius:4px;font-size:0.8rem;">.bashrc</code> so it loads automatically on every new terminal session.</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-label">bash · Environment Configuration</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <code><span class="comment"># Source ROS environment (run in every terminal)</span>
+<span class="cmd">source /opt/ros/noetic/setup.bash</span>
+
+<span class="comment"># Add to .bashrc so it loads automatically</span>
+<span class="cmd">echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc</span>
+<span class="cmd">source ~/.bashrc</span>
+
+<span class="comment"># Verify ROS is installed correctly</span>
+<span class="cmd">rosversion -d</span>
+<span class="comment"># Expected output: noetic</span></code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section-header" style="margin-top:3rem;">
+      <div class="section-label">Summary</div>
+      <div class="section-title">Deployment Overview</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:2rem;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem;">🖥️</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:0.3rem;">EC2 Instance</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Ubuntu 20.04 LTS · t2.micro · 30GB EBS</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem;">🤖</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:0.3rem;">ROS Noetic</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Desktop-Full · Simulators · Perception</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;">
+        <div style="font-size:1.8rem;margin-bottom:0.5rem;">🏢</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:0.3rem;">IS Robotics</div>
+        <div style="font-size:0.85rem;color:var(--muted);">Cloud-based robotic simulation platform</div>
+      </div>
+    </div>
+
+    <div class="page-nav">
+      <a href="/">← Home</a>
+      <a href="/completion" class="primary">S3 Gallery →</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="footer-name">Jyot</div>
+    <p>ROS Noetic · AWS EC2 · IS Robotics Cloud Deployment</p>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('code');
+      const text = code.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>
